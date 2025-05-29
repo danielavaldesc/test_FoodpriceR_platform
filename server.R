@@ -1,28 +1,23 @@
 # -----------------------------------------------
-# Cargamos las librerías necesarias
+# Cargamos librerías necesarias para la lógica
 # -----------------------------------------------
 library(shiny)
-library(FoodpriceR)     # Para DataCol() y CoCA()
-library(rhandsontable)  # Para edición de EER
-library(DT)             # Para mostrar tabla de resultados
-library(leaflet)        # Para el mapa interactivo
-library(sf)             # Para manejar shapefiles
-library(dplyr)          # Para filtros y transformaciones
-library(scales)         # Para formatear los KPIs
-library(ggplot2)        # Para gráficos personalizados
-library(gridExtra)      # Para mostrar múltiples gráficos juntos
+library(FoodpriceR)
+library(rhandsontable)
+library(DT)
+library(leaflet)
+library(sf)
+library(dplyr)
+library(scales)
+library(ggplot2)
+library(stringr)
 
 # -----------------------------------------------
-# 1. Cargar shapefiles para el mapa
+# 1. Cargar shapefiles y definir capitales
 # -----------------------------------------------
-# Directorio 
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\test_FoodpriceR_platform\\")
-
-# Cargar archivos geográficos (ajusta rutas si es necesario)
 departamentos <- st_read("shape_files/dptos_col/departamentos.shp")
 municipios <- st_read("shape_files/DANE_geodata/MGN_ANM_MPIOS_WGS84.shp")
 
-# Lista de capitales reconocidas por FoodpriceR
 capitales <- c(
   "Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Cúcuta",
   "Bucaramanga", "Pereira", "Ibagué", "Pasto", "Manizales", "Neiva",
@@ -30,81 +25,70 @@ capitales <- c(
   "Palmira", "Buenaventura", "Tuluá", "Cartago", "Tunja", "Ipiales", "Montería"
 )
 
-# Obtener centroides de las capitales para mostrarlas como puntos
-capitales_sf <- municipios %>%
-  filter(toupper(MPIO_CNMBR) %in% toupper(capitales)) %>%
-  st_centroid()
+ciudades_disponibles <- unique(capitales)
 
-# Relación Departamento → Ciudad base
 dpto_a_ciudad <- c(
-  "ANTIOQUIA" = "Medellín",
-  "ATLANTICO" = "Barranquilla",
-  "BOGOTÁ" = "Bogotá",
-  "BOLÍVAR" = "Cartagena",
-  "BOYACÁ" = "Tunja",
-  "CALDAS" = "Manizales",
-  "CAUCA" = "Popayán",
-  "CESAR" = "Valledupar",
-  "CÓRDOBA" = "Montería",
-  "CUNDINAMARCA" = "Bogotá",
-  "HUILA" = "Neiva",
-  "LA GUAJIRA" = "Riohacha",
-  "MAGDALENA" = "Santa Marta",
-  "META" = "Villavicencio",
-  "NARIÑO" = "Pasto",
-  "NORTE DE SANTANDER" = "Cúcuta",
-  "QUINDIO" = "Armenia",
-  "RISARALDA" = "Pereira",
-  "SANTANDER" = "Bucaramanga",
-  "SUCRE" = "Sincelejo",
-  "TOLIMA" = "Ibagué",
-  "VALLE DEL CAUCA" = "Cali",
-  "ARAUCA" = "Arauca",
-  "CASANARE" = "Yopal",
-  "PUTUMAYO" = "Mocoa",
-  "AMAZONAS" = "Leticia"
+  "ANTIOQUIA" = "Medellín", "ATLANTICO" = "Barranquilla", "BOGOTÁ" = "Bogotá",
+  "BOLÍVAR" = "Cartagena", "BOYACÁ" = "Tunja", "CALDAS" = "Manizales",
+  "CAUCA" = "Popayán", "CESAR" = "Valledupar", "CÓRDOBA" = "Montería",
+  "CUNDINAMARCA" = "Bogotá", "HUILA" = "Neiva", "LA GUAJIRA" = "Riohacha",
+  "MAGDALENA" = "Santa Marta", "META" = "Villavicencio", "NARIÑO" = "Pasto",
+  "NORTE DE SANTANDER" = "Cúcuta", "QUINDIO" = "Armenia", "RISARALDA" = "Pereira",
+  "SANTANDER" = "Bucaramanga", "SUCRE" = "Sincelejo", "TOLIMA" = "Ibagué",
+  "VALLE DEL CAUCA" = "Cali", "ARAUCA" = "Arauca", "CASANARE" = "Yopal",
+  "PUTUMAYO" = "Mocoa", "AMAZONAS" = "Leticia"
+)
+
+colores_personalizados <- c(
+  "Hombre" = "#2c582b",
+  "Mujer"  = "#f6bc2d"
 )
 
 # -----------------------------------------------
-# 2. Lógica reactiva principal
+# 2. Servidor principal
 # -----------------------------------------------
-
 server <- function(input, output, session) {
   
-  # ------------------- Selección de ciudad -------------------
-  ciudad_seleccionada <- reactiveVal("Bogotá")  # valor inicial
+  ciudad_seleccionada <- reactiveVal("Bogotá")
   
+  # ---------- Mapa con resaltado y diferenciación ----------
   output$mapa_ciudades <- renderLeaflet({
     leaflet() %>%
-      addTiles() %>%
+      addProviderTiles("CartoDB.Positron") %>%
       addPolygons(
         data = departamentos,
-        color = "#444444", weight = 1, fillOpacity = 0.2,
-        layerId = ~NOMBRE_DPT, label = ~NOMBRE_DPT
-      ) %>%
-      addCircleMarkers(
-        data = capitales_sf,
-        radius = 6, color = "red", fillOpacity = 0.8,
-        label = ~MPIO_CNMBR, layerId = ~MPIO_CNMBR
+        fillColor = ~ifelse(NOMBRE_DPT %in% names(dpto_a_ciudad), "#8fc751", "#e0e0e0"),
+        fillOpacity = 0.5,
+        weight = 1,
+        color = "#444444",
+        label = ~NOMBRE_DPT,
+        layerId = ~NOMBRE_DPT
       )
   })
   
   observeEvent(input$mapa_ciudades_shape_click, {
     click_id <- input$mapa_ciudades_shape_click$id
     ciudad <- dpto_a_ciudad[[click_id]]
-    if (!is.null(ciudad)) ciudad_seleccionada(ciudad)
-  })
-  
-  observeEvent(input$mapa_ciudades_marker_click, {
-    ciudad_click <- input$mapa_ciudades_marker_click$id
-    if (!is.null(ciudad_click)) ciudad_seleccionada(ciudad_click)
+    if (!is.null(ciudad)) {
+      ciudad_seleccionada(ciudad)
+      
+      leafletProxy("mapa_ciudades") %>%
+        clearGroup("selected") %>%
+        addPolylines(
+          data = departamentos %>% filter(NOMBRE_DPT == click_id),
+          color = "#2c582b",
+          weight = 4,
+          opacity = 1,
+          group = "selected"
+        )
+    }
   })
   
   output$ciudad_activa <- renderText({
     paste("Ciudad activa:", ciudad_seleccionada())
   })
   
-  # ------------------- Entrada EER manual -------------------
+  # ---------- Tabla editable de EER ----------
   output$hot_table_col_manual_eer <- renderRHandsontable({
     rhandsontable(FoodpriceR::EER, useTypes = TRUE, stretchH = "all")
   })
@@ -117,7 +101,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # ------------------- Carga de datos y cálculo -------------------
+  # ---------- Datos y cálculo ----------
   data_input_col <- reactive({
     DataCol(
       Month = as.numeric(input$month),
@@ -136,38 +120,58 @@ server <- function(input, output, session) {
     }
   })
   
-  # ------------------- Tabla de resultados -------------------
+  # ---------- Tabla de resultados ----------
   output$coca_table_col <- renderDT({
     req(input$show_table_col)
     data <- coca_result_col()
-    data$cost_day <- round(data$cost_day, 1)  # reducir decimales
-    datatable(data, options = list(pageLength = 10))
+    num_cols <- sapply(data, is.numeric)
+    data[num_cols] <- lapply(data[num_cols], function(x) round(x, 2))
+    
+    datatable(
+      data,
+      options = list(pageLength = 10, dom = 'tip'),
+      rownames = FALSE,
+      class = 'stripe hover cell-border order-column',
+      style = "bootstrap5"
+    )
   })
   
-  # ------------------- Botón de descarga -------------------
   output$download_col_results <- downloadHandler(
     filename = function() {
       paste0("CoCA_", ciudad_seleccionada(), "_", input$year, "_", input$month, ".csv")
     },
     content = function(file) {
       data <- coca_result_col()
-      data$cost_day <- round(data$cost_day, 1)
+      num_cols <- sapply(data, is.numeric)
+      data[num_cols] <- lapply(data[num_cols], function(x) round(x, 2))
       write.csv(data, file, row.names = FALSE)
     }
   )
   
-  # ------------------- KPIs visuales -------------------
+  # ---------- KPI dinámicos ----------
   output$kpi_ui <- renderUI({
     req(coca_result_col())
     data <- coca_result_col()
-    kpi_1 <- round(mean(data$cost_day), 1)
-    kpi_2 <- round(min(data$cost_day), 1)
-    kpi_3 <- round(max(data$cost_day), 1)
+    
+    mayor <- data[which.max(data$cost_day), ]
+    menor <- data[which.min(data$cost_day), ]
+    promedio <- round(mean(data$cost_day), 1)
     
     fluidRow(
-      column(4, h4("Costo Promedio"), h3(comma(kpi_1))),
-      column(4, h4("Costo Mínimo"), h3(comma(kpi_2))),
-      column(4, h4("Costo Máximo"), h3(comma(kpi_3)))
+      column(4,
+             h4("Grupo con mayor costo"),
+             tags$b(paste0(mayor$Age, " - ", mayor$Sex)),
+             h3(comma(round(mayor$cost_day, 1)))
+      ),
+      column(4,
+             h4("Grupo con menor costo"),
+             tags$b(paste0(menor$Age, " - ", menor$Sex)),
+             h3(comma(round(menor$cost_day, 1)))
+      ),
+      column(4,
+             h4("Promedio general"),
+             h3(comma(promedio))
+      )
     )
   })
   
@@ -175,45 +179,29 @@ server <- function(input, output, session) {
     paste("Resultados: CoCA -", ciudad_seleccionada())
   })
   
-  # ------------------- Gráfico: Comparativo y pirámide -------------------
+  # ---------- Gráfico diferenciado ----------
   output$plot_col <- renderPlot({
     req(coca_result_col())
     data <- coca_result_col()
     data$Sex <- recode(as.character(data$Sex), `0` = "Hombre", `1` = "Mujer")
-    if (!"Age" %in% names(data)) {
-      data$Age <- "Total"
-    }
+    if (!"Age" %in% names(data)) data$Age <- "Total"
     data$cost_day <- round(data$cost_day, 1)
+    data$Grupo <- paste(data$Age, "-", data$Sex)
+    data$Grupo <- factor(data$Grupo, levels = unique(data$Grupo))
     
-    # 1. Barras comparativas
-    p1 <- ggplot(data, aes(x = Age, y = cost_day, fill = Sex)) +
-      geom_bar(stat = "identity", position = position_dodge(width = 0.6), width = 0.6) +
-      scale_fill_manual(values = c("Hombre" = "#1f77b4", "Mujer" = "#ff7f0e")) +
-      labs(title = "Costo diario estimado por grupo de edad y sexo",
-           x = "Grupo de Edad", y = "Costo Diario (COP)") +
+    ggplot(data, aes(x = Grupo, y = cost_day, fill = Sex)) +
+      geom_bar(stat = "identity", width = 0.7) +
+      scale_fill_manual(values = colores_personalizados) +
+      labs(
+        title = "Costo diario estimado por grupo etario y sexo",
+        x = "Grupo Demográfico", y = "Costo Diario (COP)"
+      ) +
       theme_minimal(base_size = 14) +
-      theme(legend.position = "bottom")
-    
-    # 2. Pirámide si aplica
-    plot_list <- list(p1)
-    if (length(unique(data$Sex)) > 1 && length(unique(data$Age)) > 1) {
-      data_pyr <- data
-      data_pyr$cost_plot <- ifelse(data_pyr$Sex == "Mujer", -data_pyr$cost_day, data_pyr$cost_day)
-      
-      p2 <- ggplot(data_pyr, aes(x = Age, y = cost_plot, fill = Sex)) +
-        geom_bar(stat = "identity", width = 0.6) +
-        coord_flip() +
-        scale_y_continuous(labels = abs) +
-        scale_fill_manual(values = c("Hombre" = "#1f77b4", "Mujer" = "#ff7f0e")) +
-        labs(title = "Pirámide comparativa de costo diario",
-             x = "Grupo de Edad", y = "Costo Diario (COP)") +
-        theme_minimal(base_size = 14) +
-        theme(legend.position = "bottom")
-      
-      plot_list[[2]] <- p2
-    }
-    
-    # Mostrar uno o ambos gráficos
-    gridExtra::grid.arrange(grobs = plot_list, ncol = 1)
+      theme(
+        legend.position = "bottom",
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
   })
 }
+
+

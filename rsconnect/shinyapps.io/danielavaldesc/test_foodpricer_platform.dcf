@@ -1,0 +1,10 @@
+name: test_foodpricer_platform
+title:
+username: danielavaldesc
+account: danielavaldesc
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14848945
+bundleId: 10364315
+url: https://danielavaldesc.shinyapps.io/test_foodpricer_platform/
+version: 1
