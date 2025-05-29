@@ -15,6 +15,8 @@ library(gridExtra)      # Para mostrar múltiples gráficos juntos
 # -----------------------------------------------
 # 1. Cargar shapefiles para el mapa
 # -----------------------------------------------
+# Directorio 
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\test_FoodpriceR_platform\\")
 
 # Cargar archivos geográficos (ajusta rutas si es necesario)
 departamentos <- st_read("shape_files/dptos_col/departamentos.shp")
