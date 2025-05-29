@@ -11,28 +11,78 @@ library(FoodpriceR)
 # -----------------------------------------------
 # Interfaz principal con menú personalizado
 # -----------------------------------------------
+
 ui <- navbarPage(
-  title = "Plataforma CoCA",
+  title = "FoodPrice",
+  id = "main_navbar",   # ayuda para referenciar si quieres luego
   
+  # Forzamos CSS de navbar visible y horizontal
+  header = tags$head(
+    tags$style(HTML("
+      /* Fondo verde y diseño horizontal */
+      .navbar, .navbar-default {
+        background-color: #2c582b !important;
+        border: none;
+        border-radius: 0;
+        margin-bottom: 0;
+        min-height: 56px;
+      }
+
+      /* Ítems del menú alineados horizontalmente */
+      .navbar-nav {
+        float: left !important;
+        margin: 0;
+      }
+
+      /* Marca (título) */
+      .navbar-brand {
+        color: #ffffff !important;
+        font-weight: bold;
+        padding-top: 14px;
+      }
+
+      /* Ítems del menú */
+      .navbar-default .navbar-nav > li > a {
+        color: #ffffff !important;
+        padding-top: 15px;
+        padding-bottom: 15px;
+      }
+
+      /* Hover sobre ítems */
+      .navbar-default .navbar-nav > li > a:hover {
+        color: #f6bc2d !important;
+      }
+
+      /* Activo (pestaña seleccionada) */
+      .navbar-default .navbar-nav > .active > a,
+      .navbar-default .navbar-nav > .active > a:focus,
+      .navbar-default .navbar-nav > .active > a:hover {
+        color: #bd8d1a !important;
+        background-color: #2c582b !important;
+      }
+    "))
+  ),
+  
+  # Tema base para botones y fuentes
   theme = bs_theme(
     version = 5,
-    bg = "#ffffff",         # Fondo blanco
-    fg = "#2c582b",         # Texto verde institucional
-    primary = "#bd8d1a",    # Botones dorados
-    secondary = "#2c582b",  # Verde activo
+    bg = "#ffffff",
+    fg = "#2c582b",
+    primary = "#bd8d1a",
+    secondary = "#2c582b",
     success = "#8fc751",
     base_font = font_google("Inter"),
     heading_font = font_google("Inter"),
-    navbar_bg = "#2c582b",  # Fondo navbar
-    navbar_fg = "#ffffff",  # Texto navbar
-    nav_bg = "#2c582b",     # Hover activo
-    nav_fg = "#ffffff"
+    navbar_bg = "#2c582b",     # <-- Solo esta línea cambia el fondo
+    navbar_fg = "#ffffff",     # Texto blanco
+    nav_fg = "#ffffff",
+    nav_bg = "#2c582b"
   ),
   
   # ---------------- INICIO ----------------
   tabPanel("Inicio",
            fluidPage(
-             h2("Bienvenido a la Plataforma CoCA"),
+             h2("FoodPrice – Plataforma de Análisis de Costos de Dietas Asequibles"),
              p("Esta plataforma permite estimar el Costo Diario de la Dieta Asequible (CoCA) en Colombia."),
              p("Podrás visualizar, descargar resultados y realizar análisis usando tus propios datos."),
              br(),
@@ -109,3 +159,4 @@ ui <- navbarPage(
            )
   )
 )
+
