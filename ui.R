@@ -8,37 +8,27 @@ library(plotly)
 
 ui <- navbarPage(
   title = div(
-    tags$img(src = "logo_FoodPriceR.png", height = "40px", style = "margin-right:10px;"),
-    strong("FoodPrice")
+    tags$img(src = "logo_FoodPriceR2.png",
+             height = "120px", 
+             style = "margin-right:10px;")
   ),
   theme = bs_theme(
     version = 5,
     bootswatch = "flatly",
     primary = "#2c582b",
+    secondary = "#f6bc2d",
     base_font = font_google("DM Sans")
   ),
   id = "main_navbar",
   
-  tabPanel("Inicio",
-           fluidPage(
-             fluidRow(
-               column(12,
-                      h1("Bienvenido a la Plataforma FoodPrice"),
-                      p("Aquí puedes estimar el Costo Diario de una Dieta Asequible (CoCA) usando distintas fuentes de datos. Usa el menú para navegar por las diferentes secciones."),
-                      br(),
-                      tags$img(src = "logo_FoodPriceR.png", height = "150px"),
-                      br(),
-                      h3("¿Qué puedes hacer en esta plataforma?"),
-                      tags$ul(
-                        tags$li("Visualizar datos por ciudad a través del mapa"),
-                        tags$li("Calcular CoCA por archivo, manualmente o usando bases nacionales"),
-                        tags$li("Consultar definiciones clave en el glosario"),
-                        tags$li("Descargar resultados en formato CSV")
-                      )
-               )
-             )
-           )
+  # Estilo para separar ítems del navbar
+  header = tags$head(
+    tags$link(rel = "stylesheet", 
+              type = "text/css",
+              href = "custom.css")
   ),
+  
+  panel_inicio,
   
   navbarMenu("FoodPrice Colombia",
              tabPanel("CoCA",

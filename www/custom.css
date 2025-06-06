@@ -1,0 +1,22 @@
+/* Espaciado horizontal entre ítems del menú */
+.navbar-nav > li > a.nav-link {
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+  color: white !important;
+}
+
+.navbar-nav > li > a.nav-link:hover {
+  color: #f6bc2d !important;
+}
+
+/* Espaciado también para ítems activos */
+.navbar-nav > li > a.nav-link.active {
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+  color: #f6bc2d !important;
+}
+
+/* Marca (logo y texto) */
+.navbar-brand {
+  color: white !important;
+}
