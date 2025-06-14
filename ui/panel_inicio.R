@@ -26,10 +26,10 @@ panel_inicio = tabPanel("Inicio",
                           tags$a(href = "https://hdl.handle.net/10568/155125", target = "_blank", "https://hdl.handle.net/10568/155125")),
                         
                         h3("Documentos de interés"),
-                        p("(Aquí podrías listar o enlazar publicaciones clave, si lo deseas)"),
+                        p("(Publicaciones clave)"),
                         
                         h3("Equipo"),
-                        p("(Puedes agregar nombres, correos o enlaces del equipo aquí)"),
+                        p("(Nombres, correos o enlaces del equipo)"),
                         
                         h3("Aliados"),
                         p("(Organizaciones o entidades que colaboran con el proyecto)"),
